@@ -2,9 +2,11 @@ import pandas as pd
 import numpy as np
 
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+from sklearn.pipeline import Pipeline
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
 
 import joblib
 df = pd.read_csv("data/raw/telco.csv")
@@ -17,11 +19,9 @@ df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce")
 
 # Remove rows with missing values
 df.dropna(inplace=True)
+
 # Convert target column to binary
 df["Churn"] = df["Churn"].map({"Yes": 1, "No": 0})
-
-# Encode categorical features
-df = pd.get_dummies(df, drop_first=True)
 
 
 # Features
@@ -30,6 +30,27 @@ X = df.drop("Churn", axis=1)
 # Target
 y = df["Churn"]
 
+categorical_cols = X.select_dtypes(include=["object"]).columns
+
+numerical_cols = X.select_dtypes(exclude=["object"]).columns
+
+preprocessor = ColumnTransformer(
+    transformers=[
+        ("cat", OneHotEncoder(drop="first"), categorical_cols)
+    ],
+    remainder="passthrough"
+)
+
+pipeline = Pipeline(
+    steps=[
+        ("preprocessor", preprocessor),
+        ("model", RandomForestClassifier(
+            n_estimators=100,
+            random_state=42
+        ))
+    ]
+)
+
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
@@ -37,14 +58,9 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
-model = RandomForestClassifier(
-    n_estimators=100,
-    random_state=42
-)
-
 # Train model
-model.fit(X_train, y_train)
-y_pred = model.predict(X_test)
+pipeline.fit(X_train, y_train)
+y_pred = pipeline.predict(X_test)
 # Evaluate model
 accuracy = accuracy_score(y_test, y_pred)
 f1 = f1_score(y_test, y_pred)
@@ -57,7 +73,6 @@ print("Confusion Matrix:")
 print(cm)
 
 # Save trained model
-joblib.dump(model, "models/churn_model.pkl")
-
-print("Model saved successfully!")
+joblib.dump(pipeline, "models/churn_pipeline.pkl")
+print("Pipeline saved successfully!")
 #python src/training/train.py

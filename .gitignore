@@ -2,3 +2,5 @@ venv/
 __pycache__/
 *.pkl
 .env
+mlruns/
+mlflow.db

@@ -8,8 +8,15 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
+import mlflow
+import mlflow.sklearn
+
 import joblib
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment("telco_churn_experiment")
+
 df = pd.read_csv("data/raw/telco.csv")
+
 
 # Remove customerID (not useful for prediction)
 df.drop("customerID", axis=1, inplace=True)
@@ -45,7 +52,7 @@ pipeline = Pipeline(
     steps=[
         ("preprocessor", preprocessor),
         ("model", RandomForestClassifier(
-            n_estimators=100,
+            n_estimators=300,
             random_state=42
         ))
     ]
@@ -58,19 +65,31 @@ X_train, X_test, y_train, y_test = train_test_split(
     random_state=42
 )
 
+with mlflow.start_run():
+
 # Train model
-pipeline.fit(X_train, y_train)
-y_pred = pipeline.predict(X_test)
+    pipeline.fit(X_train, y_train)
+    y_pred = pipeline.predict(X_test)
 # Evaluate model
-accuracy = accuracy_score(y_test, y_pred)
-f1 = f1_score(y_test, y_pred)
-cm = confusion_matrix(y_test, y_pred)
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    cm = confusion_matrix(y_test, y_pred)
+#configuration choices
+    mlflow.log_param("n_estimators", 300)
+    mlflow.log_param("random_state", 42)
+#model performance
+    mlflow.log_metric("accuracy", accuracy)
+    mlflow.log_metric("f1_score", f1)
+#trained pipeline artifact
+    mlflow.sklearn.log_model(
+    pipeline,
+    artifact_path="model"
+    )
 
-print("Accuracy:", accuracy)
-print("F1 Score:", f1)
-
-print("Confusion Matrix:")
-print(cm)
+    print("Accuracy:", accuracy)
+    print("F1 Score:", f1)
+    print("Confusion Matrix:")
+    print(cm)
 
 # Save trained model
 joblib.dump(pipeline, "models/churn_pipeline.pkl")

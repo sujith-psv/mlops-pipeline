@@ -1,0 +1,23 @@
+artifact_path: file:///C:/Users/Dee Suj/Desktop/data_analytics/P3-MLOPS Pipeline/mlruns/353882150664130628/models/m-d3cee24a47f54e56a6f58a4a7d9c9108/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.10.7
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.7.2
+    skops_trusted_types: null
+mlflow_version: 3.12.0
+model_id: m-d3cee24a47f54e56a6f58a4a7d9c9108
+model_size_bytes: 56785426
+model_uuid: m-d3cee24a47f54e56a6f58a4a7d9c9108
+prompts: null
+run_id: 108808b0c5ba411b904446a5bd2bb7cb
+utc_time_created: '2026-05-12 07:11:59.810733'

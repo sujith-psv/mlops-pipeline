@@ -1,0 +1,8 @@
+artifact_location: file:///C:/Users/Dee Suj/Desktop/data_analytics/P3-MLOPS Pipeline/mlruns/353882150664130628
+creation_time: 1778569428842
+experiment_id: '353882150664130628'
+last_update_time: 1778569428842
+lifecycle_stage: active
+name: telco_churn_experiment
+trace_location: null
+workspace: default

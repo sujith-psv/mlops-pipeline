@@ -1,6 +1,12 @@
 venv/
 __pycache__/
+
+# Ignore pickle files
 *.pkl
+
+# Keep deployed model
+!models/churn_pipeline.pkl
+
 .env
 mlruns/
 mlflow.db

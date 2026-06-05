@@ -361,14 +361,7 @@ Potential future upgrades:
 
 # Screenshots To Add
 
-Recommended screenshots for better presentation:
 
-* Swagger UI
-* MLflow UI
-* Evidently Drift Report
-* Prefect Workflow Dashboard
-* Docker Container Running
-* Render Deployment Dashboard
 
 ---
 

@@ -352,7 +352,6 @@ Potential future upgrades:
 * Kubernetes deployment
 * Streamlit frontend
 * Authentication system
-* Automated retraining
 * Database integration
 * Model registry integration
 * Real-time monitoring dashboards

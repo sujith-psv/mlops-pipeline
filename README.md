@@ -359,8 +359,37 @@ Potential future upgrades:
 
 ---
 
-# Screenshots To Add
+# Screenshots
 
+
+
+## FastAPI Deployment
+
+![FastAPI Deployment](assets/render_fastapi.png)
+
+## MLflow Training Runs
+
+![MLflow Training Runs](assets/mlflow_trainingruns.png)
+
+## MLflow Metrics
+
+![MLflow Metrics](assets/mlflow_metrics.png)
+
+## MLflow Parameters
+
+![MLflow Parameters](assets/mlflow_parameters.png)
+
+## Prefect Workflow Orchestration
+
+![Prefect Workflow](assets/prefect_runs.png)
+
+## Drift Detection Report
+
+![Drift Detection](assets/drift_detection.png)
+
+## Drift Distribution Analysis
+
+![Drift Graph](assets/drift_graph.png)
 
 
 ---

@@ -3,3 +3,6 @@ __pycache__/
 mlruns/
 mlflow.db
 .git/
+reports/
+data/
+.gitignore

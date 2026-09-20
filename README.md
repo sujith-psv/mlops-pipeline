@@ -1,421 +1,298 @@
 # End-to-End MLOps Pipeline for Telecom Churn Prediction
 
+An end-to-end MLOps project for predicting telecom customer churn, covering the full ML lifecycle: data validation, preprocessing, model training and comparison, classification threshold optimization, experiment tracking, drift monitoring, workflow orchestration, API serving, containerization, and cloud deployment.
+
 ## Live Deployment
 
-* Live API: [https://mlops-pipeline-5pxk.onrender.com/](https://mlops-pipeline-5pxk.onrender.com/)
-* Swagger Docs: [https://mlops-pipeline-5pxk.onrender.com/docs](https://mlops-pipeline-5pxk.onrender.com/docs)
-* GitHub Repository: [https://github.com/sujith-psv/mlops-pipeline](https://github.com/sujith-psv/mlops-pipeline)
+- **Live API:** https://mlops-pipeline-5pxk.onrender.com/
+- **Swagger Docs:** https://mlops-pipeline-5pxk.onrender.com/docs
+- **Health Check:** https://mlops-pipeline-5pxk.onrender.com/health
+- **Repository:** https://github.com/sujith-psv/mlops-pipeline
 
 ---
 
-# Project Overview
-
-This project is a complete end-to-end MLOps pipeline for telecom customer churn prediction.
-
-The system covers the full machine learning lifecycle:
-
-* data validation
-* preprocessing
-* model training
-* experiment tracking
-* drift monitoring
-* workflow orchestration
-* API serving
-* containerization
-* cloud deployment
-
-The project uses production-style MLOps tooling to simulate a real-world ML engineering workflow.
-
----
-
-# Features
-
-## Machine Learning Pipeline
-
-* Telecom churn prediction using Scikit-learn
-* Automated preprocessing pipeline
-* Feature encoding and scaling
-* Model serialization with Joblib
-
-## Data Validation
-
-* Great Expectations integration
-* Schema validation
-* Null value checks
-* Data quality monitoring
-
-## Experiment Tracking
-
-* MLflow integration
-* Accuracy and F1-score tracking
-* Model artifact logging
-* Experiment comparison
-
-## Monitoring
-
-* Evidently AI drift detection
-* Data drift reports
-* HTML monitoring dashboard generation
-
-## Workflow Orchestration
-
-* Prefect integration
-* Automated ML workflow execution
-* Pipeline task management
-
-## API Deployment
-
-* FastAPI inference API
-* Interactive Swagger documentation
-* JSON-based prediction endpoint
-
-## Containerization
-
-* Dockerized application
-* Reproducible environment
-* Cloud-ready deployment
-
-## Cloud Hosting
-
-* Public deployment using Render
-* Live production-style inference API
-
----
-
-# Tech Stack
-
-| Category               | Technologies        |
-| ---------------------- | ------------------- |
-| Programming Language   | Python              |
-| Machine Learning       | Scikit-learn        |
-| Data Processing        | Pandas, NumPy       |
-| API Framework          | FastAPI             |
-| Experiment Tracking    | MLflow              |
-| Validation             | Great Expectations  |
-| Monitoring             | Evidently AI        |
-| Workflow Orchestration | Prefect             |
-| Containerization       | Docker              |
-| Cloud Deployment       | Render              |
-| Visualization          | Matplotlib, Seaborn |
-
----
-
-# Project Architecture
+## Architecture
 
 ```text
-Raw Data
-    ↓
-Great Expectations Validation
-    ↓
-Data Preprocessing
-    ↓
+Telco Churn Dataset
+        |
+        v
+Great Expectations
+   (data validation)
+        |
+        v
+Preprocessing
+ (encoding + scaling)
+        |
+        v
 Model Training
-    ↓
-MLflow Experiment Tracking
-    ↓
-Model Serialization
-    ↓
-Evidently Drift Monitoring
-    ↓
-Prefect Workflow Orchestration
-    ↓
-FastAPI Inference API
-    ↓
-Docker Containerization
-    ↓
-Cloud Deployment on Render
+(Logistic Regression,
+ Random Forest,
+ Gradient Boosting)
+        |
+        v
+MLflow
+(experiment tracking)
+        |
+        v
+Best Model Selected
+(Logistic Regression,
+ threshold = 0.63)
+        |
+        v
+Evidently
+(drift monitoring)
+        |
+        v
+FastAPI
+(/health, /predict)
+        |
+        v
+Docker
+(~668 MB optimized image)
+        |
+        v
+Render
+(cloud deployment)
+
+Prefect
+   |
+   +---- orchestrates ----> validation → training → drift detection
 ```
 
 ---
 
-# Folder Structure
+## Tech Stack
+
+| Category               | Technologies                                       |
+| ----------------------- | --------------------------------------------------- |
+| Programming Language    | Python                                               |
+| Machine Learning        | Scikit-learn (Logistic Regression, Random Forest, Gradient Boosting) |
+| Data Processing         | Pandas, NumPy                                        |
+| API Framework           | FastAPI                                              |
+| Experiment Tracking     | MLflow                                               |
+| Data Validation         | Great Expectations                                   |
+| Drift Monitoring        | Evidently AI                                         |
+| Workflow Orchestration  | Prefect                                              |
+| Containerization        | Docker                                               |
+| Cloud Deployment        | Render                                               |
+| Visualization           | Matplotlib, Seaborn                                  |
+
+---
+
+## Dataset
+
+IBM Telco Customer Churn dataset:
+
+- 7,043 customer records
+- 21 columns including the target and customer identifier
+- 19 predictive input features used for training
+- Binary target: `Churn`
+- `customerID` dropped before training as a non-predictive identifier
+
+---
+
+## Machine Learning
+
+**Preprocessing:** numerical scaling (`StandardScaler`), categorical encoding (`OneHotEncoder`, with unknown-category handling), stratified train/test split, missing-value handling for `TotalCharges`.
+
+**Models compared:** Logistic Regression, Random Forest, and Gradient Boosting — evaluated on accuracy, precision, recall, F1, and ROC-AUC. Logistic Regression and Random Forest use class weighting to address class imbalance.
+
+**Threshold optimization:** the default 0.50 cutoff isn't optimal for an imbalanced problem, so the pipeline sweeps thresholds from 0.20–0.70 and selects the one that maximizes F1. The selected threshold, `0.63`, is used consistently in both evaluation and the live API:
+
+```python
+prediction = 1 if churn_probability >= 0.63 else 0
+```
+
+### Final Model — Logistic Regression
+
+| Metric                   |  Score |
+| ------------------------- | -----: |
+| Accuracy                  | 77.68% |
+| Precision                 | 56.52% |
+| Recall                    | 69.52% |
+| F1 Score                  | 62.35% |
+| ROC-AUC                   | 83.53% |
+| Classification Threshold  |   0.63 |
+
+Threshold optimization improved F1 over the default 0.50 cutoff.
+
+---
+
+## Data Validation
+
+Great Expectations checks, run before training:
+- `tenure` within expected range
+- `MonthlyCharges` and `customerID` not null
+- `Churn` not null and contains only valid values
+
+```bash
+python src/validation/validate_data.py
+```
+
+## Experiment Tracking
+
+MLflow logs model type, all five metrics, and model artifacts, backed by SQLite (`sqlite:///mlflow.db`).
+
+```bash
+mlflow ui
+```
+
+## Drift Monitoring
+
+Evidently compares a reference dataset against a current dataset at the column level and reports drift percentage. Reports are generated as HTML and saved to `reports/` (git-ignored, since they're generated artifacts).
+
+```bash
+python src/monitoring/drift_detection.py
+```
+
+## Workflow Orchestration
+
+Prefect (`src/pipelines/ml_pipeline.py`) runs validation → training → drift detection as a single flow, with explicit task dependencies, retries, and status reporting.
+
+```bash
+python src/pipelines/ml_pipeline.py
+```
+
+---
+
+## API
+
+FastAPI (`src/api/main.py`) serves the trained model.
+
+**`GET /health`**
+```json
+{ "status": "ok" }
+```
+
+**`POST /predict`** — accepts the customer feature fields required by the trained preprocessing pipeline and returns the churn prediction, probability, and classification threshold.
+```json
+{
+  "prediction": 0,
+  "probability": 0.5849856933235633,
+  "threshold": 0.63
+}
+```
+(0.585 probability < 0.63 threshold → prediction = 0)
+
+Swagger docs: `/docs` (locally at `http://localhost:8000/docs`, or the live link above).
+
+---
+
+## Docker
+
+The API image uses a dedicated `requirements-api.txt`, excluding MLOps-only dependencies (MLflow, Prefect, Evidently, Great Expectations, Matplotlib, Seaborn) that aren't needed for inference. This cut the image from **1.94 GB to 668 MB (a 66% reduction)**, verified against both `/health` and `/predict` after rebuild.
+
+```bash
+docker build -t telco-churn-api .
+docker run -d --name telco-churn-api-container -p 8000:8000 telco-churn-api
+```
+Then open `http://localhost:8000/docs`.
+
+## Cloud Deployment
+
+Deployed on Render at https://mlops-pipeline-5pxk.onrender.com/, verified via both the health and prediction endpoints.
+
+---
+
+## Project Structure
 
 ```text
 mlops-pipeline/
-│
-├── data/
-│   └── raw/
-│       └── telco.csv
-│
-├── models/
-│   └── churn_pipeline.pkl
-│
+├── data/raw/telco.csv
+├── models/churn_pipeline.pkl
 ├── reports/
-│   └── drift_report.html
-│
+├── assets/
+│   ├── render_fastapi_health.png
+│   ├── render_fastapi_predict.png
+│   ├── mlflow_trainingruns.png
+│   ├── mlflow_metrics.png
+│   ├── mlflow_parameters.png
+│   ├── prefect_runs.png
+│   ├── drift_detection.png
+│   └── drift_graph.png
 ├── src/
-│   ├── api/
-│   │   └── main.py
-│   │
-│   ├── training/
-│   │   └── train.py
-│   │
-│   ├── validation/
-│   │   └── validate_data.py
-│   │
-│   ├── monitoring/
-│   │   └── drift_detection.py
-│   │
-│   └── orchestration/
-│       └── prefect_flow.py
-│
+│   ├── api/main.py
+│   ├── monitoring/drift_detection.py
+│   ├── pipelines/ml_pipeline.py
+│   ├── training/train.py
+│   └── validation/validate_data.py
 ├── Dockerfile
 ├── requirements.txt
+├── requirements-api.txt
+├── .dockerignore
 ├── .gitignore
 └── README.md
 ```
 
 ---
 
-# Model Performance
-
-| Metric   | Score |
-| -------- | ----- |
-| Accuracy | ~78%  |
-| F1 Score | ~53%  |
-
----
-
-# API Usage
-
-## Base URL
-
-```text
-https://mlops-pipeline-5pxk.onrender.com
-```
-
-## Swagger Documentation
-
-```text
-https://mlops-pipeline-5pxk.onrender.com/docs
-```
-
----
-
-# Prediction Endpoint
-
-## POST `/predict`
-
-### Sample Request
-
-```json
-{
-  "gender": "Female",
-  "SeniorCitizen": 0,
-  "Partner": "Yes",
-  "Dependents": "No",
-  "tenure": 12,
-  "PhoneService": "Yes",
-  "MultipleLines": "No",
-  "InternetService": "Fiber optic",
-  "OnlineSecurity": "No",
-  "OnlineBackup": "Yes",
-  "DeviceProtection": "No",
-  "TechSupport": "No",
-  "StreamingTV": "Yes",
-  "StreamingMovies": "Yes",
-  "Contract": "Month-to-month",
-  "PaperlessBilling": "Yes",
-  "PaymentMethod": "Electronic check",
-  "MonthlyCharges": 89.85,
-  "TotalCharges": 1080.5
-}
-```
-
-### Sample Response
-
-```json
-{
-  "prediction": "Yes"
-}
-```
-
----
-
-# Running Locally
-
-## Clone Repository
+## Running Locally
 
 ```bash
 git clone https://github.com/sujith-psv/mlops-pipeline.git
 cd mlops-pipeline
-```
 
----
-
-## Create Virtual Environment
-
-### Windows
-
-```bash
 python -m venv venv
-venv\Scripts\activate
-```
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-### Linux / Mac
-
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-
----
-
-## Install Dependencies
-
-```bash
 pip install -r requirements.txt
+
+python src/validation/validate_data.py    # 1. validate data
+python src/training/train.py              # 2. train + select model
+python src/monitoring/drift_detection.py  # 3. check drift
+python src/pipelines/ml_pipeline.py       # or run steps 1-3 as one Prefect flow
+
+uvicorn src.api.main:app --reload         # 4. serve the API
 ```
+Open `http://localhost:8000/docs`.
 
 ---
 
-## Run Training Pipeline
+## Screenshots
 
-```bash
-python src/training/train.py
-```
+### FastAPI API
 
----
+| Health Endpoint | Prediction Endpoint |
+|---|---|
+| ![Health](assets/render_fastapi_health.png) | ![Predict](assets/render_fastapi_predict.png) |
 
-## Run Data Validation
+### MLflow
 
-```bash
-python src/validation/validate_data.py
-```
+| Training Runs | Metrics |
+|---|---|
+| ![MLflow Training Runs](assets/mlflow_trainingruns.png) | ![MLflow Metrics](assets/mlflow_metrics.png) |
 
----
+| Parameters |
+|---|
+| ![MLflow Parameters](assets/mlflow_parameters.png) |
 
-## Run Drift Detection
+### Workflow & Monitoring
 
-```bash
-python src/monitoring/drift_detection.py
-```
+| Prefect Workflow | Drift Detection |
+|---|---|
+| ![Prefect Workflow](assets/prefect_runs.png) | ![Drift Detection](assets/drift_detection.png) |
 
----
-
-## Run FastAPI Server
-
-```bash
-uvicorn src.api.main:app --reload
-```
+| Drift Distribution Analysis |
+|---|
+| ![Drift Graph](assets/drift_graph.png) |
 
 ---
 
-# Docker Usage
+## Key Learnings
 
-## Build Docker Image
+End-to-end ML pipeline design, data quality validation, imbalanced-classification handling, multi-model comparison, classification threshold optimization, experiment tracking, drift monitoring, workflow orchestration, REST API development, Docker image optimization, and cloud deployment.
 
-```bash
-docker build -t churn-mlops .
-```
+## Future Improvements
 
----
-
-## Run Docker Container
-
-```bash
-docker run -p 8000:8000 churn-mlops
-```
+GitHub Actions CI/CD, automated (drift-triggered) retraining, MLflow Model Registry, Kubernetes deployment, authentication, database integration, real-time monitoring dashboards, unit/integration/API testing, Infrastructure-as-Code.
 
 ---
 
-## Open API
+## Author
 
-```text
-http://localhost:8000/docs
-```
+**Sujith** — [github.com/sujith-psv](https://github.com/sujith-psv)
 
----
+## License
 
-# Monitoring
-
-The project includes:
-
-* drift detection reports
-* data quality validation
-* experiment tracking
-* orchestration monitoring
-
-Generated monitoring reports are stored in:
-
-```text
-reports/
-```
-
----
-
-# Future Improvements
-
-Potential future upgrades:
-
-* CI/CD with GitHub Actions
-* Kubernetes deployment
-* Streamlit frontend
-* Authentication system
-* Database integration
-* Model registry integration
-* Real-time monitoring dashboards
-
----
-
-# Screenshots
-
-
-
-## FastAPI Deployment
-
-![FastAPI Deployment](assets/render_fastapi.png)
-
-## MLflow Training Runs
-
-![MLflow Training Runs](assets/mlflow_trainingruns.png)
-
-## MLflow Metrics
-
-![MLflow Metrics](assets/mlflow_metrics.png)
-
-## MLflow Parameters
-
-![MLflow Parameters](assets/mlflow_parameters.png)
-
-## Prefect Workflow Orchestration
-
-![Prefect Workflow](assets/prefect_runs.png)
-
-## Drift Detection Report
-
-![Drift Detection](assets/drift_detection.png)
-
-## Drift Distribution Analysis
-
-![Drift Graph](assets/drift_graph.png)
-
-
----
-
-# Key Learnings
-
-This project demonstrates:
-
-* production-style ML deployment
-* model serving architecture
-* workflow orchestration
-* cloud deployment workflows
-* MLOps monitoring practices
-* Docker-based infrastructure
-* API engineering
-* experiment tracking systems
-
----
-
-# Author
-
-Sujith
-
-GitHub: [https://github.com/sujith-psv](https://github.com/sujith-psv)
-
----
-
-# License
-
-This project is intended for educational and portfolio purposes.
+Intended for educational and portfolio purposes.

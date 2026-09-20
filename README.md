@@ -9,6 +9,7 @@ An end-to-end MLOps project for predicting telecom customer churn, covering the 
 - **Health Check:** https://mlops-pipeline-5pxk.onrender.com/health
 - **Repository:** https://github.com/sujith-psv/mlops-pipeline
 
+The deployed `/predict` endpoint was verified using the trained model and the optimized classification threshold of `0.63`.
 ---
 
 ## Architecture
@@ -158,22 +159,26 @@ python src/pipelines/ml_pipeline.py
 
 ## API
 
+## API
+
 FastAPI (`src/api/main.py`) serves the trained model.
 
 **`GET /health`**
+
 ```json
-{ "status": "ok" }
-```
+{
+  "status": "ok"
+}
 
 **`POST /predict`** — accepts the customer feature fields required by the trained preprocessing pipeline and returns the churn prediction, probability, and classification threshold.
 ```json
 {
   "prediction": 0,
-  "probability": 0.5849856933235633,
+  "probability": 0.5389389543090253,
   "threshold": 0.63
 }
 ```
-(0.585 probability < 0.63 threshold → prediction = 0)
+(0.538 probability < 0.63 threshold → prediction = 0)
 
 Swagger docs: `/docs` (locally at `http://localhost:8000/docs`, or the live link above).
 
